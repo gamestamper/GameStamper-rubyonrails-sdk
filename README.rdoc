@@ -1,0 +1,301 @@
+= GSGraph
+
+A full-stack GameStamper/GoPlay Graph API wrapper in Ruby 
+for use with Rails.  This project (and README) is based off of the original Facebook project fb_graph
+by nov mattake (https://github.com/rockycaamano/fb_graph)
+and is a direct descentdent of the contributions of rockycaamano
+(https://github.com/rockycaamano/gs_graph).
+
+== Installation
+
+  gem install gs_graph
+
+== Use
+
+Because the GoPlay network has potentially many different APIs for accessing graph data, and because Ruby on Rails locks down
+http entities such as the request and session, there is an extra step required for using this SDK in a Ruby on Rails app.  
+In your application controller, simply include the following in order to allow GSGraph to access the correct APIs:
+
+class ApplicationController < ActionController::Base
+	
+	before_filter :setup
+	protected
+		def setup
+			GSGraph::setup session, request
+		end
+
+
+== Examples
+
+Now GSGraph supports all objects listed here: http://developers.gamestamper.com/docs/reference/api/
+Almost all connections　for each object are also supported. ("attachments" and "shares" connections of message object are not supported yet)
+
+You can also play with a Rails sample app here. http://fbgraphsample.heroku.com/
+
+See GitHub wiki for more examples.
+https://github.com/nov/gs_graph/wiki
+
+=== GET
+
+==== Basic Objects
+
+  user = GSGraph::User.me(ACCESS_TOKEN)
+
+  user = GSGraph::User.fetch('matake')
+  user.name    # => 'Nov Matake'
+  user.picture # => 'https://graph.gamestamper.com/matake/picture'
+
+  # gs_graph doesn't access to Graph API until you call "fetch"
+  user = GSGraph::User.new('matake', :access_token => YOUR_ACCESS_TOKEN)
+  user.identifier # => "matake"
+  user.name # => nil
+  user.link # => nil
+  user = user.fetch
+  user.name # => "Nov Matake"
+  user.description # => "http://www.gamestamper.com/matake"
+
+  page = GSGraph::Page.fetch('smartfmteam')
+  page.name     # => 'smart.fm'
+  page.picture  # => 'https://graph.gamestamper.com/smart.fm/picture'
+
+  :
+
+==== Connections
+
+  # Public connections
+  user = GSGraph::User.fetch('matake')
+  user.feed
+  user.posts
+  user.friends
+  user.tagged
+  user.family
+  :
+
+  # Private connections requires "access_token"
+  GSGraph::User.new('matake').friends # => raise GSGraph::Unauthorized
+  user = GSGraph::User.fetch('matake', :access_token => ACCESS_TOKEN)
+  user.albums
+  user.events
+  user.friends
+  user.likes
+  :
+
+  # "home" connection is only available for "me"
+  me = User.new('me', :access_token => ACCESS_TOKEN)
+  me.home
+  :
+
+By default, GSGraph will only return the default fields. In order to
+get a non-default field, you have to supply the connect with an options hash
+specifying the field. An example for events:
+
+  user.events({:fields => "owner,name,description,picture"}) # { and } optional
+
+An overview of which fields you can include in the graph API can be found at
+https://developers.gamestamper.com/docs/reference/api/, which has a description
+of the specific objects fields in the sidebar under "Objects".
+
+==== Search
+
+  # all objects
+  GSGraph::Searchable.search("GSGraph") # => Array of Hash
+
+  # specify type
+  GSGraph::Page.search("GSGraph") # => Array of GSGraph::Page
+  GSGraph::User.search("matake", :access_token => ACCESS_TOKEN) # => Array of GSGraph::User
+
+==== Pagination
+
+  # collection
+  user = GSGraph::User.new('matake', :access_token => ACCESS_TOKEN)
+  likes = user.likes # => Array of GSGraph::Like
+  likes.next         # => Array of GSGraph::Like (next page)
+  likes.previous     # => Array of GSGraph::Like (previous page)
+  likes.collection.next     # => Hash for pagination options (ex. {"limit"=>"25", "until"=>"2010-08-08T03:17:21+0000"})
+  likes.collection.previous # => Hash for pagination options (ex. {"limit"=>"25", "since"=>"2010-08-08T06:28:20+0000"})
+  user.likes(likes.collection.next)     # => same with likes.next
+  user.likes(likes.collection.previous) # => same with likes.previous
+
+  # search results
+  results = GSGraph::Page.search("GSGraph") # => Array of GSGraph::Page
+  results.next     # => Array of GSGraph::Page (next page)
+  results.previous # => Array of GSGraph::Page (next page)
+  results.klass    # => GSGraph::Page
+  results.collection.next     # => Hash for pagination options (ex. {"limit"=>"25", "until"=>"2010-08-08T03:17:21+0000"})
+  results.collection.previous # => Hash for pagination options (ex. {"limit"=>"25", "since"=>"2010-08-08T06:28:20+0000"})
+  results.klass.search(results.query, results.collection.next)     # => same with results.next
+  results.klass.search(results.query, results.collection.previous) # => same with results.previous
+
+=== POST
+
+==== Update status (wall post)
+
+  me = GSGraph::User.me(ACCESS_TOKEN)
+  me.feed!(
+    :message => 'Updating via GSGraph',
+    :picture => 'https://graph.gamestamper.com/matake/picture',
+    :link => 'https://github.com/nov/gs_graph',
+    :name => 'GSGraph',
+    :description => 'A Ruby wrapper for Facebook Graph API'
+  )
+
+==== Post a like/comment to a post
+
+  post = GSGraph::Page.new(117513961602338).feed.first
+  bool = post.like!(
+    :access_token => ACCESS_TOKEN
+  )
+  comment = post.comment!(
+    :access_token => ACCESS_TOKEN,
+    :message => 'Hey, I\'m testing you!'
+  )
+
+==== Post a note
+
+  page = GSGraph::Page.new(117513961602338)
+  note = page.note!(
+    :access_token => ACCESS_TOKEN,
+    :subject => 'testing',
+    :message => 'Hey, I\'m testing you!'
+  )
+
+==== Post a link
+
+  me = GSGraph::User.me(ACCESS_TOKEN)
+  link = me.link!(
+    :link => 'https://github.com/nov/gs_graph',
+    :message => 'A Ruby wrapper for Facebook Graph API.'
+  )
+
+==== Create Event, respond to it
+
+  me = GSGraph::User.me(ACCESS_TOKEN)
+  event = me.event!(
+    :name => 'GSGraph test event',
+    :start_time => 1.week.from_now,
+    :end_time => 2.week.from_now
+  )
+  bool = event.attending!(
+    :access_token => ACCESS_TOKEN
+  )
+  bool = event.maybe!(
+    :access_token => ACCESS_TOKEN
+  )
+  bool = event.declined!(
+    :access_token => ACCESS_TOKEN
+  )
+
+==== Create an album
+
+  me = GSGraph::User.me(ACCESS_TOKEN)
+  album = me.album!(
+    :name => 'GSGraph test',
+    :message => 'test test test'
+  ) # => now facebook Graph API returns weird response for this call
+
+==== Upload a photo to an album
+
+  me = GSGraph::User.me(ACCESS_TOKEN)
+  album = me.albums.first
+  album.photo!(
+    :access_token => ACCESS_TOKEN,
+    :source => File.new('/Users/nov/Desktop/nov.gif', 'rb'), # 'rb' is needed only on windows
+    :message => 'Hello, where is photo?'
+  )
+
+=== DELETE
+
+==== Delete an object
+
+  post = GSGraph::Page.new(117513961602338).feed.first
+  bool = post.like!(
+    :access_token => ACCESS_TOKEN
+  )
+  comment = post.comment!(
+    :access_token => ACCESS_TOKEN,
+    :message => 'Hey, I\'m testing you!'
+  )
+  comment.destroy(:access_token => ACCESS_TOKEN)
+  post.unlike!(:access_token => ACCESS_TOKEN)
+  post.destroy(:access_token => ACCESS_TOKEN)
+
+=== Authentication
+
+Both Facebook JavaScript SDK and normal OAuth2 flow is supported.
+Below I show simple sample code.
+You can also see https://github.com/nov/gs_graph_sample for more details Rails3 sample application.
+
+In addition, if you are migrating an application that uses old-style session keys you can exchange
+the keys for access tokens.
+See more here: http://developers.gamestamper.com/docs/authentication/fb_sig/
+
+==== JavaScript SDK
+
+  fb_auth = GSGraph::Auth.new(YOUR_APP_ID, YOUR_APPLICATION_SECRET)
+  fb_auth.client # => Rack::OAuth2::Client
+
+  # get Facebook's auth cookie in advance using their JS SDK
+  fb_auth.from_cookie(cookies)
+  fb_auth.access_token # => Rack::OAuth2::AccessToken
+  fb_auth.user         # => GSGraph::User (only basic attributes)
+  fb_auth.user.fetch   # => fetch more details
+
+==== Normal OAuth2 Flow
+
+  # setup client
+  client = fb_auth.client
+  client.redirect_uri = "http://your.client.com/facebook/callback"
+
+  # redirect user to facebook
+  redirect_to client.authorization_uri(
+    :scope => [:email, :read_stream, :offline_access]
+  )
+
+  # in callback
+  client.authorization_code = params[:code]
+  access_token = client.access_token! :client_auth_body # => Rack::OAuth2::AccessToken
+  GSGraph::User.me(access_token).fetch # => GSGraph::User
+
+==== Extend Access Token Lifetime
+
+  # setup client
+  fb_auth = GSGraph::Auth.new(YOUR_APP_ID, YOUR_APPLICATION_SECRET)
+  fb_auth.exchange_token! 'short-life-access-token'
+  fb_auth.access_token # => Rack::OAuth2::AccessToken
+
+
+=== Analytics
+
+  app = GSGraph::Application.new(YOUR_APP_ID, :secret => YOUR_APPLICATION_SECRET)
+  app.insights # => Array of GSGraph::Insight
+
+=== Test User
+
+Not tested well yet.
+Sample is here.
+https://gist.github.com/752974
+
+=== FQL
+
+Not tested well yet.
+Sample is here.
+https://gist.github.com/752914
+
+=== More Examples?
+
+See GitHub wiki for more examples.
+https://github.com/nov/gs_graph/wiki
+
+== Note on Patches/Pull Requests
+
+* Fork the project.
+* Make your feature addition or bug fix.
+* Add tests for it. This is important so I don't break it in a
+  future version unintentionally.
+* Commit, do not mess with rakefile, version, or history.
+  (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
+* Send me a pull request. Bonus points for topic branches.
+
+== Copyright
+
+Copyright (c) 2010 nov matake. See LICENSE for details.
