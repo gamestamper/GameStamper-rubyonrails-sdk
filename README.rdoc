@@ -32,9 +32,13 @@ In your application controller, simply include the following in order to allow G
 class ApplicationController < ActionController::Base
 	
 	before_filter :setup
+
 	protected
+
 		def setup
+
 			GSGraph::setup session, request
+
 		end
 
 
