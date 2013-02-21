@@ -8,11 +8,11 @@ and is a direct descendent of the contributions of rockycaamano
 
 == Installation
 
-We have not yet registered this gem with rubygems.org.  Once we do, the install will be simply:
+The gem as of version 2.6.5 is registered with rubygems.org.  So installation is simply:
 
   gem install gs_graph
 
-However, as of now, you will need to do the following:
+OR you can do the following:
 
 1. check out the repository
 2. in the gs_graph directory on your system, run:
