@@ -3,12 +3,25 @@
 A full-stack GameStamper/GoPlay Graph API wrapper in Ruby 
 for use with Rails.  This project (and README) is based off of the original Facebook project fb_graph
 by nov mattake (https://github.com/rockycaamano/fb_graph)
-and is a direct descentdent of the contributions of rockycaamano
+and is a direct descendent of the contributions of rockycaamano
 (https://github.com/rockycaamano/gs_graph).
 
 == Installation
 
+We have not yet registered this gem with rubygems.org.  Once we do, the install will be simply:
+
   gem install gs_graph
+
+However, as of now, you will need to do the following:
+
+1. check out the repository
+2. in the gs_graph directory on your system, run:
+
+	gem build gs_graph.gemspec
+
+3. from within your project, run:
+	
+	gem install [PATH_TO_GSGRAPH_GEM]/gsgraph-2.6.5.gem
 
 == Use
 

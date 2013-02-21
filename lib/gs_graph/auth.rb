@@ -8,7 +8,7 @@ module GSGraph
       @client = Rack::OAuth2::Client.new(
         :identifier             => client_id,
         :secret                 => client_secret,
-        :host                   => URI.parse(ROOT_URL).host,
+        :host                   => URI.parse(GSGraph::graph_url).host,
         :authorization_endpoint => '/oauth/authorize',
         :token_endpoint         => '/oauth/access_token',
         :redirect_uri           => options[:redirect_uri]
@@ -25,7 +25,7 @@ module GSGraph
     end
 
     def authorize_uri(canvas_uri, options = {})
-      endpoint = URI.parse SignedRequest::OAUTH_DIALOG_ENDPOINT
+      endpoint = URI.parse SignedRequest::oauth_dialog_endpoint
       params = options.merge(
         :client_id    => client.identifier,
         :redirect_uri => canvas_uri

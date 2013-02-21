@@ -4,7 +4,7 @@ describe GSGraph::Node do
 
   describe '.new' do
     it 'should setup endpoint' do
-      GSGraph::Node.new('matake').endpoint.should == File.join(GSGraph::ROOT_URL, 'matake')
+      GSGraph::Node.new('matake').endpoint.should == File.join(GSGraph::graph_url, 'matake')
     end
 
     it 'should support access_token option' do

@@ -8,8 +8,35 @@ module GSGraph
   VERSION = ::File.read(
     ::File.join(::File.dirname(__FILE__), '../VERSION')
   ).delete("\n\r")
-  ROOT_URL = "https://graph.gamestamper.com"
+  @@graph = "https://graph.gamestamper.com"
+	@@www = "http://www.gamestamper.com"
 
+	def self.setup(session, request)
+		if (!request[:gsgraph].blank?)
+			session[:gsgraph] = request[:gsgraph]
+		end
+		
+		if (!request[:gswww].blank?)
+			session[:gswww] = request[:gswww]
+		end
+		
+		if (!session[:gsgraph].blank?)
+			@@graph = session[:gsgraph]
+		end
+		
+		if (!session[:gswww].blank?)
+			@@www = session[:gswww]
+		end
+	end
+	
+	def self.graph_url
+		return @@graph
+	end
+	
+	def self.www_url
+		return @@www
+	end
+	
   def self.logger
     @@logger
   end

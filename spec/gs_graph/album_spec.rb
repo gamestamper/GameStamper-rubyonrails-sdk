@@ -69,14 +69,14 @@ describe GSGraph::Album do
 
     context 'when access token is given' do
       before { album.access_token = 'access_token' }
-      it { should == File.join(GSGraph::ROOT_URL, '12345/picture?access_token=access_token') }
+      it { should == File.join(GSGraph::graph_url, '12345/picture?access_token=access_token') }
       it 'should support size' do
-        album.picture(:small).should == File.join(GSGraph::ROOT_URL, '12345/picture?type=small&access_token=access_token')
+        album.picture(:small).should == File.join(GSGraph::graph_url, '12345/picture?type=small&access_token=access_token')
       end
     end
 
     context 'when no access token' do
-      it { should == File.join(GSGraph::ROOT_URL, '12345/picture') }
+      it { should == File.join(GSGraph::graph_url, '12345/picture') }
     end
 
     context 'when no redirect' do
