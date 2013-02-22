@@ -2,7 +2,7 @@
 
 A full-stack GameStamper/GoPlay Graph API wrapper in Ruby 
 for use with Rails.  This project (and README) is based off of the original Facebook project fb_graph
-by nov mattake (https://github.com/rockycaamano/fb_graph)
+by nov mattake (https://github.com/nov/fb_graph)
 and is a direct descendent of the contributions of rockycaamano
 (https://github.com/rockycaamano/gs_graph).
 
